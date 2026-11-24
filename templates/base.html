@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}BLR Live{% endblock %}</title>
 {% block head %}{% endblock %}
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=17">
 </head>
 <body>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -24,6 +24,14 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2h8l1.5 5h-11zM10 8h4v11h-4zM5 20h14v2H5z"/></svg>Operations</a>
         <a href="/map" {% if page == 'map' %}aria-current="page"{% endif %}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Live map</a>
+        <a class="nav-icon nav-trends" href="/airlines" target="_blank" rel="noopener noreferrer" aria-label="Airlines and weather (opens in a new tab)" title="Airlines and weather (opens in a new tab)">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5 13.6 8.2 22 12.6v2L13.6 12.4l-.4 6.2 3 2.2v1.6L12 21.2l-4.2 1.2v-1.6l3-2.2-.4-6.2L2 14.6v-2l8.4-4.4z"/><path fill="currentColor" opacity=".35" d="M2 21h3v2H2zm5-3h3v5H7zm5-3h3v8h-3z"/></svg>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="7" r="3.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 1v2m0 8v2M2 7h2m8 0h2M3.8 2.8l1.4 1.4m7.6 7.6 1.4 1.4M12.2 2.8l-1.4 1.4"/><path fill="currentColor" d="M8 19a4 4 0 0 1-.3-8A5.2 5.2 0 0 1 17.5 10a3.6 3.6 0 0 1-.2 7.2H8z"/></svg>
+        </a>
+        <a class="nav-icon nav-stream" href="/stream" target="_blank" rel="noopener noreferrer" aria-label="Stream and health (opens in a new tab)" title="Stream and health (opens in a new tab)">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 5h12l-3-3 1.4-1.4L19 6.5l-6.6 5.9L11 11l3-3H2zm0 8h9l-2.5-2.5L10.9 9 16 14.5 10.9 20l-1.5-1.5L12 16H2z"/></svg>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21S4 15.9 4 10.3A4.6 4.6 0 0 1 12 7.4a4.6 4.6 0 0 1 8 2.9C20 15.9 12 21 12 21z"/><path stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" d="M5.5 12h3l1.5-3 2.5 6 1.5-3h4"/></svg>
+        </a>
       </nav>
     </div>
   </div>
@@ -41,19 +49,7 @@
   <span>Streamed through Apache Kafka and Apache Flink into PostgreSQL.</span>
 </footer>
 <script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
-<script src="{{ url_for('static', filename='common.js') }}?v=4"></script>
+<script src="{{ url_for('static', filename='common.js') }}?v=17"></script>
 {% block scripts %}{% endblock %}
-<svg class="sprite" aria-hidden="true" focusable="false">
-  <symbol id="i-plane" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5 13.6 8.2 22 12.6v2L13.6 12.4l-.4 6.2 3 2.2v1.6L12 21.2l-4.2 1.2v-1.6l3-2.2-.4-6.2L2 14.6v-2l8.4-4.4z"/></symbol>
-  <symbol id="i-runway" viewBox="0 0 64 24"><path fill="currentColor" d="M20 0h24l8 24H12z"/><path fill="#fff" d="M31 2h2v4h-2zm0 6h2v4h-2zm0 6h2v4h-2zm0 6h2v2h-2z"/></symbol>
-  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M12 1.5v3m0 15v3M1.5 12h3m15 0h3M4.6 4.6l2.1 2.1m10.6 10.6 2.1 2.1m0-14.8-2.1 2.1M6.7 17.3l-2.1 2.1"/></symbol>
-  <symbol id="i-cloud" viewBox="0 0 24 24"><path fill="currentColor" d="M7 18.5a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 9.2a3.7 3.7 0 0 1-.2 7.3H7z"/></symbol>
-  <symbol id="i-rain" viewBox="0 0 24 24"><path fill="currentColor" d="M7 15a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 5.7a3.7 3.7 0 0 1-.2 7.3H7z"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="m8 17-1 3m5-3-1 3m5-3-1 3"/></symbol>
-  <symbol id="i-fog" viewBox="0 0 24 24"><path fill="currentColor" d="M7 13a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 3.7a3.7 3.7 0 0 1-.2 7.3H7z"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4 16h16M6 19h12M9 22h6"/></symbol>
-  <symbol id="i-kafka" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3a4 4 0 1 0 0 8h10a4 4 0 1 0 0-8H7zm0 2h10a2 2 0 1 1 0 4H7a2 2 0 1 1 0-4zm0 6h10a4 4 0 1 1 0 8H7a4 4 0 1 1 0-8zm0 2a2 2 0 1 0 0 4h10a2 2 0 1 0 0-4H7z"/></symbol>
-  <symbol id="i-flink" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c5 0 9 4 9 9v3h-6c-3 0-5 1.5-5 4 0 2 1.8 3 4 3h3v2h-3c-4 0-7-2.5-7-6 0-2.8 2-5 5-6-2.3-.5-4-2.3-4-4.6C8 5.1 11.4 2 15.5 2H12zm3 2.5A3.5 3.5 0 1 0 15 11h3.2A6 6 0 0 0 15 4.5z"/></symbol>
-  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3" fill="currentColor"/><path fill="currentColor" d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5h-2v6c0 .6-2.6 1.5-6 1.5S6 11.6 6 11V5zm0 8v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6h-2v6c0 .6-2.6 1.5-6 1.5S6 19.6 6 19v-6z"/></symbol>
-  <symbol id="i-dashboard" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h8v8H3zm10 0h8v5h-8zM3 13h8v8H3zm10-2h8v10h-8z"/></symbol>
-</svg>
 </body>
 </html>

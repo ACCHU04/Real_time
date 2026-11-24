@@ -1,4 +1,4 @@
-// Live map: Leaflet on OpenStreetMap tiles; aircraft redrawn every 5 seconds from /api/positions.
+// Live map: Leaflet on Esri/CARTO tiles; aircraft redrawn every 5 seconds from /api/positions.
 // Without internet the tiles cannot load, so the page switches to a small offline base map
 // (static/vendor/blr_basemap.js: Natural Earth highways, railways and towns, and the Bengaluru city limit).
 const PHASE = { Arriving: COLORS.arr, Departing: COLORS.dep, Overflying: "#8492a0", "On ground": "#64748b" };
@@ -7,7 +7,9 @@ const RINGS = [5, 15, 30, 60];
 let show = "all", last = null, built = false, lastDirs = "";
 const offsets = {};
 
-const map = L.map("map", { zoomSnap: 0.25, zoomControl: true, attributionControl: true });
+const mapEl = $("map");
+const airportCenter = [Number(mapEl.dataset.lat) || 13.1986, Number(mapEl.dataset.lon) || 77.7066];
+const map = L.map(mapEl, { zoomSnap: 0.25, zoomControl: true, attributionControl: true }).setView(airportCenter, 10);
 
 // Basemap layer options: Real Satellite, Light, and Dark Radar
 const satelliteTiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
@@ -29,7 +31,7 @@ const darkTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x
 satelliteTiles.addTo(map);
 
 // Add layer switcher control
-L.control.layers({
+const layersControl = L.control.layers({
   "Satellite": satelliteTiles,
   "Light map": lightTiles,
   "Dark map": darkTiles
@@ -42,14 +44,15 @@ const live = L.layerGroup().addTo(map);      // trails and aircraft, redrawn on 
 let tileLoads = 0, tileErrors = 0, offline = null;
 [satelliteTiles, lightTiles, darkTiles].forEach((layer) => {
   layer.on("tileload", () => { tileLoads += 1; });
-  layer.on("tileerror", () => { tileErrors += 1; if (tileErrors >= 4 && tileLoads === 0) useOfflineBasemap(); });
+  layer.on("tileerror", () => { tileErrors += 1; if (tileErrors >= 4 && tileErrors > tileLoads) useOfflineBasemap(); });
 });
-setTimeout(() => { if (tileLoads === 0) useOfflineBasemap(); }, 6000);
+map.once("moveend", () => setTimeout(() => { if (tileLoads === 0) useOfflineBasemap(); }, 6000));
 
 function useOfflineBasemap() {
   if (offline || !window.BLR_BASEMAP) return;
   const b = window.BLR_BASEMAP;
   [satelliteTiles, lightTiles, darkTiles].forEach((layer) => map.removeLayer(layer));
+  map.removeControl(layersControl);
   map.createPane("base").style.zIndex = 250;
   offline = L.layerGroup().addTo(map);
   const opt = { pane: "base", interactive: false };
@@ -154,7 +157,7 @@ function render(d) {
   $("m-arr").textContent = fmt(s.arriving);
   $("m-dep").textContent = fmt(s.departing);
   $("m-rwy").textContent = d.runways.map((r) => r.active_direction).join(" and ");
-  $("m-wind").textContent = w.wind_kt == null ? "" : `Wind from ${String(w.wind_dir ?? 0).padStart(3, "0")}° at ${w.wind_kt} kt`;
+  $("m-wind").textContent = w.wind_kt == null ? "" : `Wind from ${w.wind_dir == null ? "variable directions" : String(w.wind_dir).padStart(3, "0") + "°"} at ${w.wind_kt} kt`;
 
   const arr = d.aircraft.filter((a) => a.phase === "Arriving");
   const dep = d.aircraft.filter((a) => a.phase === "Departing");
@@ -162,8 +165,11 @@ function render(d) {
   $("t-arr").innerHTML = arr.map((a) => `<tr><td class="flight">${esc(a.flight_iata || a.callsign)}</td><td>${esc(a.city || "–")}</td>
     <td class="num">${fmt(a.dist_km)} km</td><td class="num">${fmt(a.alt_ft)} ft</td><td class="num">${a.minutes_to_land == null ? "–" : a.minutes_to_land < 1 ? "under 1 min" : fmt(a.minutes_to_land) + " min"}</td></tr>`).join("")
     || emptyRow(5, "No arrivals within " + radius + " km.");
-  $("t-dep").innerHTML = dep.map((a) => `<tr><td class="flight">${esc(a.flight_iata || a.callsign)}</td><td>${esc(a.city || "–")}</td>
-    <td class="num">${fmt(a.dist_km)} km</td><td class="num">${fmt(a.alt_ft)} ft</td><td class="num">+${fmt(a.vrate_fpm)}</td></tr>`).join("")
+  $("t-dep").innerHTML = dep.map((a) => {
+    const rate = a.vrate_fpm == null ? "–" : (a.vrate_fpm > 0 ? "+" : "") + fmt(a.vrate_fpm) + " fpm";
+    return `<tr><td class="flight">${esc(a.flight_iata || a.callsign)}</td><td>${esc(a.city || "–")}</td>
+    <td class="num">${fmt(a.dist_km)} km</td><td class="num">${fmt(a.alt_ft)} ft</td><td class="num">${rate}</td></tr>`;
+  }).join("")
     || emptyRow(5, "No departures within " + radius + " km.");
   $("t-over").innerHTML = over.map((a) => `<tr><td class="flight">${esc(a.flight_iata || a.callsign || a.hex)}</td>
     <td class="num">${fmt(a.dist_km)} km</td><td class="num">${fmt(a.alt_ft)} ft</td><td class="num">${fmt(a.track)}°</td></tr>`).join("")
@@ -186,7 +192,12 @@ document.querySelectorAll(".filters button").forEach((b) => {
 });
 // Runway end labels only when zoomed in far enough to read them; the airport name otherwise.
 function runwayLabels() { $("map").classList.toggle("zoomed-in", map.getZoom() >= 11.5); }   // CSS hides .rwy-end below that
-map.on("zoomend", () => { runwayLabels(); if (last) render(last); });
+let zoomTimer;
+map.on("zoomend", () => {
+  runwayLabels();
+  clearTimeout(zoomTimer);
+  zoomTimer = setTimeout(() => { if (last) render(last); }, 150);
+});
 runwayLabels();
 
 poll("/api/positions", 5, render);

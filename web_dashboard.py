@@ -8,18 +8,39 @@ dashboard_ro, so the browser always shows what the consumers and Flink stored la
 
     /                 public board          /api/public
     /ops              flight operations     /api/ops
+    /airlines         airlines and weather  /api/ops
+    /stream           stream and health     /api/ops
     /map              live airspace map     /api/positions
 """
 import datetime as dt
 import decimal
 
 import psycopg
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from psycopg.rows import dict_row
+from werkzeug.exceptions import HTTPException
 
 import config
 
 app = Flask(__name__)
+
+
+@app.after_request
+def no_cache(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
+@app.errorhandler(Exception)
+def handle_error(error):
+    if isinstance(error, HTTPException):
+        return error
+    app.logger.exception("Dashboard request failed")
+    if request.path.startswith("/api/"):
+        return jsonify(error="Data unavailable"), 503
+    return "Internal Server Error", 500
 
 
 def clean(value):
@@ -57,9 +78,19 @@ def ops_page():
     return render_template("ops.html", page="ops")
 
 
+@app.get("/airlines")
+def airlines_page():
+    return render_template("airlines.html", page="airlines")
+
+
+@app.get("/stream")
+def stream_page():
+    return render_template("stream.html", page="stream")
+
+
 @app.get("/map")
 def map_page():
-    return render_template("map.html", page="map")
+    return render_template("map.html", page="map", airport=config.AIRPORT)
 
 
 # ---------------------------------------------------------------- data

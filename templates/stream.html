@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}BLR Live: stream and health{% endblock %}
+{% block heading %}Stream and health{% endblock %}
+{% block intro %}What Apache Flink computes from the live event stream, checked against SQL and the consumer lag behind it.{% endblock %}
+{% block content %}
+<div class="deck">
+  <div class="kpi-strip four" role="group" aria-label="Key figures">
+    <div class="figure"><div class="value" id="s-mov">–</div><div class="label">Movements, last 60 min</div><div class="note" id="s-asof">waiting for Flink</div></div>
+    <div class="figure"><div class="value" id="s-util">–</div><div class="label">Of runway capacity</div></div>
+    <div class="figure"><div class="value" id="s-lag">–</div><div class="label">Highest consumer lag</div><div class="note">seconds</div></div>
+    <div class="figure"><div class="value" id="s-dlq">–</div><div class="label">Dead letters</div><div class="note">across consumers</div></div>
+  </div>
+  <div class="section-title"><h2>Computed in the stream by Apache Flink</h2><p>Flink keeps one row per flight, so a movement is counted once even when its status arrives twice.</p></div>
+  <div class="pipeline-flow" aria-label="Kafka to Flink to PostgreSQL to Dashboard">
+    <span>Kafka</span><i aria-hidden="true"></i>
+    <span>Flink</span><i aria-hidden="true"></i>
+    <span>PostgreSQL</span><i aria-hidden="true"></i>
+    <span>Dashboard</span>
+  </div>
+  <div class="card-row">
+    <section class="panel flink-mark span-4" aria-labelledby="roll-h">
+      <div class="panel-head"><h2 id="roll-h">Rolling 60-minute movements per runway</h2><span class="hint">Every 5 minutes</span></div>
+      <div class="chartbox"><canvas id="c-roll" role="img" aria-label="Rolling 60-minute movements on each runway"></canvas></div>
+    </section>
+    <section class="panel flink-mark span-3" aria-labelledby="flink-h">
+      <h2 id="flink-h">Latest Flink result</h2>
+      <dl class="facts two">
+        <div><dt>Movements, last 60 min</dt><dd id="f-mov" class="big-value">–</dd><dd id="f-asof" class="hint">No Flink results yet</dd></div>
+        <div><dt>Of runway capacity</dt><dd id="f-util" class="big-value">–</dd></div>
+      </dl>
+      <h3 class="subhead">Check against SQL, per hour</h3>
+      <div class="scroll short" tabindex="0" role="region" aria-label="Flink versus SQL check table"><table>
+        <thead><tr><th scope="col">Hour</th><th scope="col" class="num">Flink</th><th scope="col" class="num">SQL</th><th scope="col" class="num">Diff</th></tr></thead>
+        <tbody id="f-check"></tbody></table></div>
+    </section>
+    <section class="panel flink-mark span-2" aria-labelledby="late-h">
+      <div class="panel-head"><h2 id="late-h">Late movements per hour</h2><span class="hint">15+ min late</span></div>
+      <div class="chartbox"><canvas id="c-late" role="img" aria-label="Late arrivals and departures per hour"></canvas></div>
+    </section>
+    <section class="panel span-3" aria-labelledby="pipeline-h">
+      <div class="panel-head"><h2 id="pipeline-h">Pipeline health</h2></div>
+      <div class="scroll" tabindex="0" role="region" aria-label="Pipeline health table"><table>
+        <thead><tr><th scope="col">Consumer</th><th scope="col">Topic</th><th scope="col">Events</th><th scope="col" class="num">Lag (s)</th><th scope="col" class="num">DLQ</th></tr></thead>
+        <tbody id="pipeline"></tbody></table></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='stream.js') }}?v=17"></script>{% endblock %}

@@ -3,7 +3,7 @@
 {% block heading %}Runway and airport operations{% endblock %}
 {% block intro %}How busy the runways are against capacity, what the schedule brings next, and what the weather allows.{% endblock %}
 {% block content %}
-<div class="deck">
+<div class="deck vertical">
   <div class="kpi-strip seven" role="group" aria-label="Key figures">
     <div class="figure"><div class="value" id="k-mov">–</div><div class="label">Runway movements</div><div class="note">last 60 min</div></div>
     <div class="figure"><div class="value" id="k-util">–</div><div class="label">Runway utilisation</div><div class="note" id="k-cap"></div></div>
@@ -14,14 +14,8 @@
     <div class="figure"><div class="value" id="k-air">–</div><div class="label">Aircraft within 60 km</div><div class="note" id="k-air2"></div></div>
   </div>
 
-  <div class="tabs" role="tablist" aria-label="Operations sections">
-    <button type="button" class="tab" role="tab" id="tab-capacity" data-tab="panel-capacity" aria-controls="panel-capacity" aria-selected="true"><svg class="icon" aria-hidden="true"><use href="#i-runway"></use></svg>Runways and capacity</button>
-    <button type="button" class="tab" role="tab" id="tab-schedule" data-tab="panel-schedule" aria-controls="panel-schedule" aria-selected="false" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-dashboard"></use></svg>Schedule and delays</button>
-    <button type="button" class="tab" role="tab" id="tab-trends" data-tab="panel-trends" aria-controls="panel-trends" aria-selected="false" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-cloud"></use></svg>Airlines and weather</button>
-    <button type="button" class="tab" role="tab" id="tab-stream" data-tab="panel-stream" aria-controls="panel-stream" aria-selected="false" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-flink"></use></svg>Stream and health</button>
-  </div>
-
-  <div class="tabpanel" role="tabpanel" id="panel-capacity" aria-labelledby="tab-capacity">
+  <div class="section-title"><h2>Runways and capacity</h2></div>
+  <div class="section-block" id="panel-capacity">
     <div class="card-row">
       <div id="runways" class="runway-pair span-6"></div>
       <section class="panel span-3" aria-labelledby="wx-h">
@@ -44,11 +38,12 @@
     </div>
   </div>
 
-  <div class="tabpanel" role="tabpanel" id="panel-schedule" aria-labelledby="tab-schedule" hidden>
+  <div class="section-title"><h2>Schedule and delays</h2></div>
+  <div class="section-block" id="panel-schedule">
     <div class="card-row">
       <section class="panel span-4" aria-labelledby="upcoming-h">
         <div class="panel-head"><h2 id="upcoming-h">Runway sequence, next 2 hours</h2></div>
-        <div class="scroll capped"><table>
+        <div class="scroll capped" tabindex="0" role="region" aria-label="Runway sequence table"><table>
           <thead><tr><th scope="col">Expected</th><th scope="col">Flight</th><th scope="col">Type</th><th scope="col">From / to</th><th scope="col">Runway</th><th scope="col" class="num">Delay</th></tr></thead>
           <tbody id="upcoming"></tbody></table></div>
       </section>
@@ -66,58 +61,6 @@
       </section>
     </div>
   </div>
-
-  <div class="tabpanel" role="tabpanel" id="panel-trends" aria-labelledby="tab-trends" hidden>
-    <div class="card-row">
-      <section class="panel span-6" aria-labelledby="airlines-h">
-        <div class="panel-head"><h2 id="airlines-h">Airline performance, last 24 hours</h2></div>
-        <div class="scroll capped"><table>
-          <thead><tr><th scope="col">Airline</th><th scope="col" class="num">Flights</th><th scope="col" class="num">On time</th><th scope="col" class="num">Average delay</th><th scope="col" class="num">Cancelled</th></tr></thead>
-          <tbody id="airlines"></tbody></table></div>
-      </section>
-      <section class="panel span-6" aria-labelledby="wx-history-h">
-        <div class="panel-head"><h2 id="wx-history-h">Visibility and wind, last 24 hours</h2></div>
-        <div class="chartbox"><canvas id="c-wx" role="img" aria-label="Visibility, wind and crosswind over 24 hours"></canvas></div>
-      </section>
-    </div>
-  </div>
-
-  <div class="tabpanel" role="tabpanel" id="panel-stream" aria-labelledby="tab-stream" hidden>
-    <div class="section-title"><h2>Computed in the stream by Apache Flink</h2><p>Flink keeps one row per flight, so a movement is counted once even when its status arrives twice.</p></div>
-    <div class="pipeline-flow" aria-hidden="true">
-      <span><svg class="icon"><use href="#i-kafka"></use></svg>Kafka</span><i></i>
-      <span><svg class="icon"><use href="#i-flink"></use></svg>Flink</span><i></i>
-      <span><svg class="icon"><use href="#i-db"></use></svg>PostgreSQL</span><i></i>
-      <span><svg class="icon"><use href="#i-dashboard"></use></svg>Dashboard</span>
-    </div>
-    <div class="card-row">
-      <section class="panel flink-mark span-4" aria-labelledby="roll-h">
-        <div class="panel-head"><h2 id="roll-h">Rolling 60-minute movements per runway</h2><span class="hint">Every 5 minutes</span></div>
-        <div class="chartbox"><canvas id="c-roll" role="img" aria-label="Rolling 60-minute movements on each runway"></canvas></div>
-      </section>
-      <section class="panel flink-mark span-3" aria-labelledby="flink-h">
-        <h2 id="flink-h">Latest Flink result</h2>
-        <dl class="facts two">
-          <div><dt id="f-asof">Movements, last 60 min</dt><dd id="f-mov" class="big-value">–</dd></div>
-          <div><dt>Of runway capacity</dt><dd id="f-util" class="big-value">–</dd></div>
-        </dl>
-        <h3 class="subhead">Check against SQL, per hour</h3>
-        <div class="scroll short"><table>
-          <thead><tr><th scope="col">Hour</th><th scope="col" class="num">Flink</th><th scope="col" class="num">SQL</th><th scope="col" class="num">Diff</th></tr></thead>
-          <tbody id="f-check"></tbody></table></div>
-      </section>
-      <section class="panel flink-mark span-2" aria-labelledby="late-h">
-        <div class="panel-head"><h2 id="late-h">Late movements per hour</h2><span class="hint">15+ min late</span></div>
-        <div class="chartbox"><canvas id="c-late" role="img" aria-label="Late arrivals and departures per hour"></canvas></div>
-      </section>
-      <section class="panel span-3" aria-labelledby="pipeline-h">
-        <div class="panel-head"><h2 id="pipeline-h">Pipeline health</h2></div>
-        <div class="scroll"><table>
-          <thead><tr><th scope="col">Consumer</th><th scope="col">Topic</th><th scope="col">Events</th><th scope="col" class="num">Lag (s)</th><th scope="col" class="num">DLQ</th></tr></thead>
-          <tbody id="pipeline"></tbody></table></div>
-      </section>
-    </div>
-  </div>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='ops.js') }}?v=4"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='ops.js') }}?v=17"></script>{% endblock %}

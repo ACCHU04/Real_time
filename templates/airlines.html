@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}BLR Live: airlines and weather{% endblock %}
+{% block heading %}Airlines and weather{% endblock %}
+{% block intro %}Airline punctuality and the weather that shaped it over the last 24 hours.{% endblock %}
+{% block content %}
+<div class="deck">
+  <div class="kpi-strip" role="group" aria-label="Key figures">
+    <div class="figure"><div class="value" id="a-otp">–</div><div class="label">On time, last 24 hours</div><div class="note">across all airlines</div></div>
+    <div class="figure"><div class="value" id="a-delay">–</div><div class="label">Average departure delay</div><div class="note">last 60 min</div></div>
+    <div class="figure"><div class="value" id="a-cancel">–</div><div class="label">Cancelled flights</div><div class="note">last 24 hours</div></div>
+    <div class="figure"><div class="value" id="a-vis">–</div><div class="label">Visibility now</div><div class="note" id="a-metar">waiting for METAR</div></div>
+    <div class="figure"><div class="value" id="a-wind">–</div><div class="label">Wind now</div><div class="note" id="a-crosswind"></div></div>
+  </div>
+  <div class="card-row">
+    <section class="panel span-6" aria-labelledby="airlines-h">
+      <div class="panel-head"><h2 id="airlines-h">Airline performance, last 24 hours</h2></div>
+      <div class="scroll capped" tabindex="0" role="region" aria-label="Airline performance table"><table>
+        <thead><tr><th scope="col">Airline</th><th scope="col" class="num">Flights</th><th scope="col" class="num">On time</th><th scope="col" class="num">Average delay</th><th scope="col" class="num">Cancelled</th></tr></thead>
+        <tbody id="airlines"></tbody></table></div>
+    </section>
+    <section class="panel span-6" aria-labelledby="wx-history-h">
+      <div class="panel-head"><h2 id="wx-history-h">Visibility and wind, last 24 hours</h2></div>
+      <div class="chartbox tall"><canvas id="c-wx" role="img" aria-label="Visibility, wind and crosswind over 24 hours"></canvas></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='airlines.js') }}?v=17"></script>{% endblock %}

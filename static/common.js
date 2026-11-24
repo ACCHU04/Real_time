@@ -29,7 +29,13 @@ const fmt = (v, d = 0) => (v === null || v === undefined ? "–" : Number(v).toL
 const hhmm = (iso) => (iso ? iso.slice(11, 16) : "");
 const emptyRow = (cols, text) => `<tr><td colspan="${cols}" class="empty">${esc(text)}</td></tr>`;
 const chip = (text, kind) => `<span class="chip ${kind}">${esc(text)}</span>`;
-const icon = (name, cls = "") => `<svg class="icon ${cls}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
+const ICONS = {
+  sun: '<circle cx="12" cy="12" r="4.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M12 1.5v3m0 15v3M1.5 12h3m15 0h3M4.6 4.6l2.1 2.1m10.6 10.6 2.1 2.1m0-14.8-2.1 2.1M6.7 17.3l-2.1 2.1"/>',
+  cloud: '<path fill="currentColor" d="M7 18.5a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 9.2a3.7 3.7 0 0 1-.2 7.3H7z"/>',
+  rain: '<path fill="currentColor" d="M7 15a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 5.7a3.7 3.7 0 0 1-.2 7.3H7z"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="m8 17-1 3m5-3-1 3m5-3-1 3"/>',
+  fog: '<path fill="currentColor" d="M7 13a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 3.7a3.7 3.7 0 0 1-.2 7.3H7z"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4 16h16M6 19h12M9 22h6"/>'
+};
+const icon = (name) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.cloud}</svg>`;
 
 function statusText(status) {
   const cls = { Cancelled: "bad", Diverted: "bad", Delayed: "warn", Boarding: "info", "Gate Closed": "info",
@@ -39,7 +45,7 @@ function statusText(status) {
 
 function poll(url, seconds, render) {
   const el = $("updated"), banner = $("conn-banner"), badge = document.querySelector(".live-badge");
-  let busy = false;
+  let busy = false, lastOk = "";
   async function tick() {
     if (busy || document.hidden) return;
     busy = true;
@@ -50,13 +56,15 @@ function poll(url, seconds, render) {
       if (!res.ok) throw new Error(String(res.status));
       const data = await res.json();
       render(data);
+      lastOk = new Date(data.generated_at).toLocaleTimeString("en-IN", { hour12: false, timeZone: "Asia/Kolkata" });
       el.classList.remove("stale");
-      el.textContent = `Updated ${new Date(data.generated_at).toLocaleTimeString("en-IN", { hour12: false, timeZone: "Asia/Kolkata" })}, refreshes every ${seconds} s`;
+      el.textContent = `Updated ${lastOk}, refreshes every ${seconds} s`;
       if (banner) banner.hidden = true;
       if (badge) { badge.textContent = "Stream online"; badge.classList.remove("offline"); }
     } catch (e) {
+      console.error("[dashboard] data refresh failed", e);
       el.classList.add("stale");
-      el.textContent = "Live data unavailable";
+      el.textContent = "Live data unavailable" + (lastOk ? " · last update " + lastOk : "");
       if (banner) banner.hidden = false;
       if (badge) { badge.textContent = "Stream offline"; badge.classList.add("offline"); }
     } finally {
@@ -67,34 +75,6 @@ function poll(url, seconds, render) {
   document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
   setInterval(tick, seconds * 1000);
   tick();
-}
-
-function setupTabs(selector) {
-  const bar = document.querySelector(selector);
-  if (!bar) return;
-  const tabs = [...bar.querySelectorAll('[role="tab"]')];
-  function select(tab, focus) {
-    tabs.forEach((t) => {
-      const active = t === tab;
-      t.setAttribute("aria-selected", String(active));
-      t.tabIndex = active ? 0 : -1;
-      const panel = $(t.dataset.tab);
-      if (panel) panel.hidden = !active;
-    });
-    if (tab && tab.dataset.tab) history.replaceState(null, "", "#" + tab.dataset.tab);
-    if (focus) tab.focus();
-    setTimeout(() => window.dispatchEvent(new Event("resize")), 30);
-  }
-  tabs.forEach((tab, i) => {
-    tab.addEventListener("click", () => select(tab));
-    tab.addEventListener("keydown", (e) => {
-      const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      const target = e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : step ? (i + step + tabs.length) % tabs.length : -1;
-      if (target >= 0) { e.preventDefault(); select(tabs[target], true); }
-    });
-  });
-  const initial = tabs.find((t) => "#" + t.dataset.tab === location.hash) || tabs[0];
-  if (initial) select(initial);
 }
 
 const charts = {};

@@ -13,7 +13,7 @@
 {% endblock %}
 {% block content %}
 <div class="deck">
-  <div class="kpi-strip" role="group" aria-label="Key figures">
+  <div class="kpi-strip four" role="group" aria-label="Key figures">
     <div class="figure"><div class="value" id="m-air">–</div><div class="label">In the air</div><div class="note" id="radius-note">within 60 km</div></div>
     <div class="figure accent-arr"><div class="value accent-arr" id="m-arr">–</div><div class="label">Approaching to land</div></div>
     <div class="figure accent-dep"><div class="value accent-dep" id="m-dep">–</div><div class="label">Climbing out</div></div>
@@ -22,7 +22,7 @@
 
   <div class="maplayout">
     <section class="mapframe" aria-label="Map of aircraft around Bengaluru airport">
-      <div id="map"></div>
+      <div id="map" data-lat="{{ airport.lat }}" data-lon="{{ airport.lon }}"></div>
       <div class="mapnote" id="mapnote" role="status" hidden></div>
       <div class="compass" aria-hidden="true"></div>
       <div class="maplegend">
@@ -33,13 +33,13 @@
       </div>
     </section>
     <aside class="side">
-      <section class="panel arr-mark" id="sec-arr" aria-labelledby="arr-table-h"><div class="panel-head"><h2 id="arr-table-h">Approaching to land</h2></div><div class="scroll"><table>
+      <section class="panel arr-mark" id="sec-arr" aria-labelledby="arr-table-h"><div class="panel-head"><h2 id="arr-table-h">Approaching to land</h2></div><div class="scroll capped" tabindex="0" role="region" aria-label="Arriving aircraft table"><table>
         <thead><tr><th scope="col">Flight</th><th scope="col">From</th><th scope="col" class="num">Distance</th><th scope="col" class="num">Altitude</th><th scope="col" class="num">Lands in</th></tr></thead>
         <tbody id="t-arr"></tbody></table></div></section>
-      <section class="panel dep-mark" id="sec-dep" aria-labelledby="dep-table-h"><div class="panel-head"><h2 id="dep-table-h">Just departed</h2></div><div class="scroll"><table>
+      <section class="panel dep-mark" id="sec-dep" aria-labelledby="dep-table-h"><div class="panel-head"><h2 id="dep-table-h">Just departed</h2></div><div class="scroll capped" tabindex="0" role="region" aria-label="Departing aircraft table"><table>
         <thead><tr><th scope="col">Flight</th><th scope="col">To</th><th scope="col" class="num">Distance</th><th scope="col" class="num">Altitude</th><th scope="col" class="num">Climb</th></tr></thead>
         <tbody id="t-dep"></tbody></table></div></section>
-      <section class="panel" id="sec-over" aria-labelledby="over-table-h"><div class="panel-head"><h2 id="over-table-h">Overflying</h2></div><div class="scroll"><table>
+      <section class="panel" id="sec-over" aria-labelledby="over-table-h"><div class="panel-head"><h2 id="over-table-h">Overflying</h2></div><div class="scroll capped" tabindex="0" role="region" aria-label="Overflying aircraft table"><table>
         <thead><tr><th scope="col">Flight</th><th scope="col" class="num">Distance</th><th scope="col" class="num">Altitude</th><th scope="col" class="num">Track</th></tr></thead>
         <tbody id="t-over"></tbody></table></div></section>
     </aside>
@@ -49,5 +49,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/blr_basemap.js') }}"></script>
-<script src="{{ url_for('static', filename='map.js') }}?v=4"></script>
+<script src="{{ url_for('static', filename='map.js') }}?v=17"></script>
 {% endblock %}
