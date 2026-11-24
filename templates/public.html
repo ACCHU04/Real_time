@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}BLR Live: flights and weather{% endblock %}
+{% block heading %}Flights and weather{% endblock %}
+{% block intro %}Arrivals and departures for the next few hours, and the weather at the airport now.{% endblock %}
+{% block content %}
+<div class="figures" aria-label="Key figures">
+  <div class="figure"><div class="value" id="k-arr">–</div><div class="label">Arrivals in the next hour</div></div>
+  <div class="figure"><div class="value" id="k-dep">–</div><div class="label">Departures in the next hour</div></div>
+  <div class="figure"><div class="value" id="k-otp">–</div><div class="label">On time, last 24 hours</div><div class="note">less than 15 min late</div></div>
+  <div class="figure"><div class="value" id="k-delayed">–</div><div class="label">Flights delayed now</div></div>
+  <div class="figure"><div class="value" id="k-cancel">–</div><div class="label">Cancelled</div><div class="note">last 24 h and next 12 h</div></div>
+</div>
+
+<div class="grid cols-2">
+  <section class="panel arr-mark" aria-labelledby="arr-h">
+    <div class="panel-head"><h2 id="arr-h">Arrivals</h2><span class="hint">Expected time in red when 15 min or more late</span></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Time</th><th>Flight</th><th>From</th><th>Airline</th><th>Expected</th><th>Status</th><th>Terminal</th></tr></thead>
+      <tbody id="arrivals"></tbody></table></div>
+  </section>
+  <section class="panel dep-mark" aria-labelledby="dep-h">
+    <div class="panel-head"><h2 id="dep-h">Departures</h2><span class="hint">Terminal and gate</span></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Time</th><th>Flight</th><th>To</th><th>Airline</th><th>Expected</th><th>Status</th><th>Terminal / gate</th></tr></thead>
+      <tbody id="departures"></tbody></table></div>
+  </section>
+</div>
+
+<div class="grid cols-main">
+  <section class="panel" aria-labelledby="wx-h">
+    <div class="panel-head"><h2 id="wx-h">Weather at the airport</h2><span class="hint" id="wx-time"></span></div>
+    <div class="wx">
+      <div><div class="temp" id="wx-temp">–</div><div class="cond" id="wx-cond"></div></div>
+      <dl class="facts">
+        <div><dt>Feels like</dt><dd id="wx-feels">–</dd></div>
+        <div><dt>Humidity</dt><dd id="wx-rh">–</dd></div>
+        <div><dt>Wind</dt><dd id="wx-wind">–</dd></div>
+        <div><dt>Visibility</dt><dd id="wx-vis">–</dd></div>
+      </dl>
+    </div>
+    <div class="advisory" id="wx-adv">–</div>
+  </section>
+  <section class="panel sky" aria-labelledby="air-h">
+    <h2 id="air-h">In the sky around the airport</h2>
+    <div class="count" id="air-total">–</div>
+    <div class="empty">aircraft within 60 km</div>
+    <ul>
+      <li><span class="sw" style="background:var(--arr)"></span><span id="air-arr">–</span></li>
+      <li><span class="sw" style="background:var(--dep)"></span><span id="air-dep">–</span></li>
+    </ul>
+    <a href="/map">See them on the live map</a>
+  </section>
+</div>
+
+<section class="panel" aria-labelledby="st-h">
+  <div class="panel-head"><h2 id="st-h">Flights by status, next 3 hours</h2></div>
+  <div class="chartbox short"><canvas id="c-status" aria-label="Flights by status in the next 3 hours" role="img"></canvas></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='public.js') }}"></script>{% endblock %}

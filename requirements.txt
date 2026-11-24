@@ -1,0 +1,6 @@
+confluent-kafka>=2.5
+psycopg[binary]>=3.2
+requests>=2.32
+flask>=3.0
+tzdata
+pytest>=8

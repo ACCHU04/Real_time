@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}BLR Live: live map{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">{% endblock %}
+{% block heading %}Aircraft around the airport{% endblock %}
+{% block intro %}Every aircraft within 60 km of Bengaluru airport, from ADS-B positions sent every 10 seconds.{% endblock %}
+{% block tools %}
+  <div class="filters" role="group" aria-label="Show aircraft">
+    <button type="button" data-show="all" aria-pressed="true">All aircraft</button>
+    <button type="button" data-show="Arriving" aria-pressed="false">Arriving</button>
+    <button type="button" data-show="Departing" aria-pressed="false">Departing</button>
+  </div>
+{% endblock %}
+{% block content %}
+<div class="figures" aria-label="Key figures">
+  <div class="figure"><div class="value" id="m-air">–</div><div class="label">In the air within 60 km</div></div>
+  <div class="figure"><div class="value" id="m-arr" style="color:var(--arr)">–</div><div class="label">Approaching to land</div></div>
+  <div class="figure"><div class="value" id="m-dep" style="color:var(--dep)">–</div><div class="label">Climbing out</div></div>
+  <div class="figure"><div class="value" id="m-rwy">–</div><div class="label">Runways in use</div><div class="note" id="m-wind"></div></div>
+</div>
+
+<div class="maplayout">
+  <section class="mapframe" aria-label="Map of aircraft around Bengaluru airport">
+    <div id="map"></div>
+    <div class="mapnote" id="mapnote" hidden></div>
+    <div class="maplegend">
+      <span><i class="sw" style="background:var(--arr)"></i>Arriving</span>
+      <span><i class="sw" style="background:var(--dep)"></i>Departing</span>
+      <span><i class="sw" style="background:#7B8794"></i>Overflying</span>
+      <span>Runways 09L/27R (north) and 09R/27L (south). Rings at 5, 15, 30 and 60 km. Lines show the last 5 minutes.</span>
+    </div>
+  </section>
+  <aside class="side">
+    <section class="panel arr-mark" id="sec-arr"><div class="panel-head"><h2>Approaching to land</h2></div><div class="scroll"><table>
+      <thead><tr><th>Flight</th><th>From</th><th class="num">Distance</th><th class="num">Altitude</th><th class="num">Lands in</th></tr></thead>
+      <tbody id="t-arr"></tbody></table></div></section>
+    <section class="panel dep-mark" id="sec-dep"><div class="panel-head"><h2>Just departed</h2></div><div class="scroll"><table>
+      <thead><tr><th>Flight</th><th>To</th><th class="num">Distance</th><th class="num">Altitude</th><th class="num">Climb (ft/min)</th></tr></thead>
+      <tbody id="t-dep"></tbody></table></div></section>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/blr_basemap.js') }}"></script>
+<script src="{{ url_for('static', filename='map.js') }}"></script>
+{% endblock %}
