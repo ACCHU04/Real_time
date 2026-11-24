@@ -26,19 +26,19 @@ poll("/api/ops", 30, (d) => {
     return `<section class="panel runway ${mark}"><div class="panel-head"><h2>Runway ${esc(r.runway)}</h2>
       <span class="hint">${r.used_for === "ARR" ? "Arrivals" : "Departures"}, landing and taking off towards ${esc(r.active_direction)}</span></div>
       <div class="meter" role="img" aria-label="${fmt(r.utilisation_pct, 1)} percent of capacity"><span style="width:${pct}%;background:${col}"></span><i style="left:50%"></i><i style="left:75%"></i><i style="left:90%"></i></div>
+      <div class="runway-art"><svg viewBox="0 0 64 24" aria-hidden="true"><use href="#i-runway"></use></svg><svg class="icon" aria-hidden="true"><use href="#i-plane"></use></svg><span class="rwy-dir">${esc(r.active_direction)}</span></div>
       <div class="line"><span><strong>${fmt(r.movements_last_60)}</strong> of ${fmt(r.capacity_per_hour)} movements in the last 60 min, ${fmt(r.planned_next_60)} planned in the next 60 min</span>
       <span class="level" style="color:${col}">${fmt(r.utilisation_pct, 1)} %, ${esc(r.busy_level)}</span></div></section>`;
   }).join("");
 
   $("w-cat").textContent = n.flight_category || "–";
   $("w-vis").textContent = n.vis_km == null ? "–" : fmt(n.vis_km, 1) + " km";
-  $("w-ceil").textContent = n.ceiling_ft ? fmt(n.ceiling_ft) + " ft" : "none";
+  $("w-ceil").textContent = n.ceiling_ft ? fmt(n.ceiling_ft) + " ft" : "No ceiling";
   $("w-wind").textContent = n.wind_kt == null ? "–" : `${String(n.wind_dir ?? 0).padStart(3, "0")}° / ${n.wind_kt} kt`;
-  $("w-hx").textContent = n.headwind_kt == null ? "–" : `${fmt(n.headwind_kt)} / ${fmt(n.crosswind_kt)} kt`;
-  $("w-hx").style.color = n.crosswind_alert ? COLORS.bad : COLORS.ink;
+  $("w-hx").innerHTML = n.headwind_kt == null ? "–" : `${fmt(n.headwind_kt)} / ${fmt(n.crosswind_kt)} kt` + (n.crosswind_alert ? chip("crosswind alert", "bad") : "");
   $("w-qnh").textContent = n.qnh_hpa ? n.qnh_hpa + " hPa" : "–";
   $("w-cf").textContent = n.capacity_factor == null ? "–" : "× " + fmt(n.capacity_factor, 2);
-  $("w-metar").textContent = n.raw_metar || "";
+  $("w-metar").textContent = n.raw_metar || "Waiting for METAR observation";
   $("w-time").textContent = n.metar_time ? `METAR observed at ${n.metar_time} IST` : "";
 
   const h = d.hourly, labels = h.map((r) => hhmm(r.hour_ist));
@@ -64,8 +64,9 @@ poll("/api/ops", 30, (d) => {
                scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { grid: { display: false } } } } });
 
   $("airlines").innerHTML = d.airlines.map((r) => `<tr><td>${esc(r.airline)}</td><td class="num">${fmt(r.flights_operated)}</td>
-    <td class="num" style="color:${r.on_time_pct >= 80 ? COLORS.good : r.on_time_pct < 60 ? COLORS.bad : COLORS.ink}">${fmt(r.on_time_pct, 1)} %</td>
-    <td class="num">${fmt(r.avg_delay_min, 1)} min</td><td class="num">${fmt(r.cancelled)}</td></tr>`).join("");
+    <td class="num ${r.on_time_pct >= 80 ? "ontime" : r.on_time_pct < 60 ? "late" : ""}">${fmt(r.on_time_pct, 1)} %</td>
+    <td class="num">${fmt(r.avg_delay_min, 1)} min</td><td class="num">${fmt(r.cancelled)}</td></tr>`).join("")
+    || emptyRow(5, "No airline figures in the last 24 hours.");
 
   const wx = d.weather_history;
   drawChart("c-wx", { type: "line", data: { labels: wx.map((r) => hhmm(r.obs_ist)), datasets: [
@@ -76,20 +77,25 @@ poll("/api/ops", 30, (d) => {
 
   $("upcoming").innerHTML = d.upcoming.map((r) => `<tr><td class="time">${esc(r.expected)}</td><td class="flight">${esc(r.flight)}</td>
     <td><span class="tag ${r.movement === "ARR" ? "arr" : "dep"}">${r.movement}</span></td><td>${esc(r.from_to)}</td>
-    <td>${esc(r.aircraft)}</td><td>${esc(r.runway)}</td><td>${statusText(r.status)}</td>
-    <td class="num ${r.delay_min >= 15 ? "late" : ""}">${fmt(r.delay_min)}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">No movements in the next 2 hours.</td></tr>`;
+    <td>${esc(r.runway)}</td><td class="num ${r.delay_min >= 15 ? "late" : ""}">${fmt(r.delay_min)}</td></tr>`).join("")
+    || emptyRow(6, "No movements in the next 2 hours.");
 
   const f = d.flink;
   $("f-mov").textContent = fmt(f.now.movements_60);
   $("f-asof").textContent = f.now.as_of ? `Movements in the 60 min to ${f.now.as_of}` : "No Flink results yet";
   $("f-util").textContent = f.now.utilisation_pct == null ? "–" : fmt(f.now.utilisation_pct, 1) + " %";
   $("f-check").innerHTML = f.check.map((r) => `<tr><td>${esc(r.hour)}</td><td class="num">${fmt(r.flink_movements)}</td>
-    <td class="num">${fmt(r.sql_movements)}</td><td class="num" style="color:${r.difference === 0 ? COLORS.good : COLORS.bad};font-weight:600">${fmt(r.difference)}</td></tr>`).join("");
+    <td class="num">${fmt(r.sql_movements)}</td><td class="num ${r.difference === 0 ? "ontime" : "late"}">${fmt(r.difference)} ${r.difference === 0 ? chip("match", "good") : chip("diff", "bad")}</td></tr>`).join("")
+    || emptyRow(4, "No Flink results yet.");
   const steps = [...new Set(f.rolling.map((r) => r.step_ist))];
   const runways = [...new Set(f.rolling.map((r) => r.runway))];
-  drawChart("c-roll", { type: "line", data: { labels: steps.map(hhmm), datasets: runways.map((rw, i) => ({
-    label: rw + (i === 0 ? " (arrivals)" : " (departures)"), borderColor: i === 0 ? COLORS.arr : COLORS.dep, pointRadius: 0, tension: 0.2, borderWidth: 2,
-    data: steps.map((s) => (f.rolling.find((r) => r.step_ist === s && r.runway === rw) || {}).movements_60 ?? null) }))
+  drawChart("c-roll", { type: "line", data: { labels: steps.map(hhmm), datasets: runways.map((rw) => {
+    const use = (d.runways.find((r) => r.runway === rw) || {}).used_for;
+    const arrivals = use === "ARR";
+    return { label: rw + (arrivals ? " (arrivals)" : use === "DEP" ? " (departures)" : ""), borderColor: arrivals ? COLORS.arr : COLORS.dep,
+      pointRadius: 0, tension: 0.2, borderWidth: 2,
+      data: steps.map((s) => (f.rolling.find((r) => r.step_ist === s && r.runway === rw) || {}).movements_60 ?? null) };
+  })
     .concat([{ label: "Capacity per runway", data: steps.map(() => (d.runways[0] || {}).capacity_per_hour ?? null), borderColor: COLORS.bad, borderDash: [6, 4], pointRadius: 0, borderWidth: 1.5 }]) },
     options: lineOpts("movements in 60 min") });
   const hours = [...new Set(f.hourly.map((r) => r.hour_ist))];
@@ -99,23 +105,10 @@ poll("/api/ops", 30, (d) => {
     { label: "Departures", data: late("DEP"), backgroundColor: COLORS.dep, stack: "s" } ] },
     options: { ...lineOpts(), scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true } } } });
 
-  $("pipeline").innerHTML = d.pipeline.map((r) => `<tr><td>${esc(r.consumer)}</td><td>${esc(r.topic)}</td><td>${esc(r.source)}</td>
-    <td class="num">${fmt(r.events)}</td><td class="num">${fmt(r.avg_lag_s, 2)}</td><td class="num">${fmt(r.avg_processing_ms, 2)}</td>
-    <td class="num">${fmt(r.dead_letters)}</td><td>${esc(r.last_event)}</td></tr>`).join("");
+  $("pipeline").innerHTML = d.pipeline.map((r) => `<tr><td>${esc(r.consumer)}</td><td>${esc(r.topic)}</td>
+    <td class="num">${fmt(r.events)}</td><td class="num">${fmt(r.avg_lag_s, 2)}</td>
+    <td class="num">${fmt(r.dead_letters)}</td></tr>`).join("")
+    || emptyRow(5, "No pipeline events recorded yet.");
 });
 
-// Interactive tab switching on operations board
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
-      btn.classList.add("active");
-      const target = document.getElementById(btn.dataset.tab);
-      if (target) {
-        target.classList.add("active");
-        setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
-      }
-    });
-  });
-});
+setupTabs(".tabs");

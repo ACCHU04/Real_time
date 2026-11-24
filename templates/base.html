@@ -5,16 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}BLR Live{% endblock %}</title>
 {% block head %}{% endblock %}
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
 </head>
 <body>
+<div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
 <header class="sign">
   <div class="wrap">
     <a class="brand" href="/">
       <span class="code">BLR</span>
       <span class="name"><strong>Kempegowda International Airport</strong>Bengaluru, live flights and weather</span>
     </a>
-    <div style="display:flex;align-items:center;gap:18px;margin-left:auto">
+    <div class="head-tools">
       <span class="live-badge">Kafka Stream Live</span>
       <nav aria-label="Pages">
         <a href="/" {% if page == 'public' %}aria-current="page"{% endif %}>
@@ -30,8 +31,9 @@
 <main class="wrap">
   <div class="pagehead">
     <div><h1>{% block heading %}{% endblock %}</h1><p class="sub">{% block intro %}{% endblock %}</p></div>
-    <div class="pagetools" style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">{% block tools %}{% endblock %}<span class="updated" id="updated">Connecting to the database</span></div>
+    <div class="pagetools">{% block tools %}{% endblock %}<span class="updated" id="updated" role="status" aria-live="polite">Connecting to the database</span></div>
   </div>
+  <div class="conn-banner" id="conn-banner" role="alert" hidden>Live data is unavailable. Showing the last values received; check that web_dashboard.py can reach PostgreSQL.</div>
 {% block content %}{% endblock %}
 </main>
 <footer class="wrap foot">
@@ -39,7 +41,19 @@
   <span>Streamed through Apache Kafka and Apache Flink into PostgreSQL.</span>
 </footer>
 <script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
-<script src="{{ url_for('static', filename='common.js') }}"></script>
+<script src="{{ url_for('static', filename='common.js') }}?v=4"></script>
 {% block scripts %}{% endblock %}
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-plane" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5 13.6 8.2 22 12.6v2L13.6 12.4l-.4 6.2 3 2.2v1.6L12 21.2l-4.2 1.2v-1.6l3-2.2-.4-6.2L2 14.6v-2l8.4-4.4z"/></symbol>
+  <symbol id="i-runway" viewBox="0 0 64 24"><path fill="currentColor" d="M20 0h24l8 24H12z"/><path fill="#fff" d="M31 2h2v4h-2zm0 6h2v4h-2zm0 6h2v4h-2zm0 6h2v2h-2z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M12 1.5v3m0 15v3M1.5 12h3m15 0h3M4.6 4.6l2.1 2.1m10.6 10.6 2.1 2.1m0-14.8-2.1 2.1M6.7 17.3l-2.1 2.1"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path fill="currentColor" d="M7 18.5a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 9.2a3.7 3.7 0 0 1-.2 7.3H7z"/></symbol>
+  <symbol id="i-rain" viewBox="0 0 24 24"><path fill="currentColor" d="M7 15a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 5.7a3.7 3.7 0 0 1-.2 7.3H7z"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="m8 17-1 3m5-3-1 3m5-3-1 3"/></symbol>
+  <symbol id="i-fog" viewBox="0 0 24 24"><path fill="currentColor" d="M7 13a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 17 3.7a3.7 3.7 0 0 1-.2 7.3H7z"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4 16h16M6 19h12M9 22h6"/></symbol>
+  <symbol id="i-kafka" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3a4 4 0 1 0 0 8h10a4 4 0 1 0 0-8H7zm0 2h10a2 2 0 1 1 0 4H7a2 2 0 1 1 0-4zm0 6h10a4 4 0 1 1 0 8H7a4 4 0 1 1 0-8zm0 2a2 2 0 1 0 0 4h10a2 2 0 1 0 0-4H7z"/></symbol>
+  <symbol id="i-flink" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c5 0 9 4 9 9v3h-6c-3 0-5 1.5-5 4 0 2 1.8 3 4 3h3v2h-3c-4 0-7-2.5-7-6 0-2.8 2-5 5-6-2.3-.5-4-2.3-4-4.6C8 5.1 11.4 2 15.5 2H12zm3 2.5A3.5 3.5 0 1 0 15 11h3.2A6 6 0 0 0 15 4.5z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3" fill="currentColor"/><path fill="currentColor" d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5h-2v6c0 .6-2.6 1.5-6 1.5S6 11.6 6 11V5zm0 8v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6h-2v6c0 .6-2.6 1.5-6 1.5S6 19.6 6 19v-6z"/></symbol>
+  <symbol id="i-dashboard" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h8v8H3zm10 0h8v5h-8zM3 13h8v8H3zm10-2h8v10h-8z"/></symbol>
+</svg>
 </body>
 </html>

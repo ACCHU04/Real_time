@@ -1,10 +1,11 @@
 // Live map: Leaflet on OpenStreetMap tiles; aircraft redrawn every 5 seconds from /api/positions.
 // Without internet the tiles cannot load, so the page switches to a small offline base map
 // (static/vendor/blr_basemap.js: Natural Earth highways, railways and towns, and the Bengaluru city limit).
-const PHASE = { Arriving: COLORS.arr, Departing: COLORS.dep, Overflying: "#7B8794", "On ground": "#4A5561" };
+const PHASE = { Arriving: COLORS.arr, Departing: COLORS.dep, Overflying: "#8492a0", "On ground": "#64748b" };
 const PLANE = "M12 1.5 L13.6 8.2 L22 12.6 L22 14.6 L13.6 12.4 L13.2 18.6 L16.2 20.8 L16.2 22.4 L12 21.2 L7.8 22.4 L7.8 20.8 L10.8 18.6 L10.4 12.4 L2 14.6 L2 12.6 L10.4 8.2 Z";
 const RINGS = [5, 15, 30, 60];
-let show = "all", last = null, built = false;
+let show = "all", last = null, built = false, lastDirs = "";
+const offsets = {};
 
 const map = L.map("map", { zoomSnap: 0.25, zoomControl: true, attributionControl: true });
 
@@ -29,9 +30,9 @@ satelliteTiles.addTo(map);
 
 // Add layer switcher control
 L.control.layers({
-  "🛰️ Satellite": satelliteTiles,
-  "🗺️ Light Map": lightTiles,
-  "🌙 Dark Radar": darkTiles
+  "Satellite": satelliteTiles,
+  "Light map": lightTiles,
+  "Dark map": darkTiles
 }, null, { position: "topright" }).addTo(map);
 
 const fixed = L.layerGroup().addTo(map);     // rings, runways, approach line
@@ -39,14 +40,16 @@ const live = L.layerGroup().addTo(map);      // trails and aircraft, redrawn on 
 
 // ---- offline base map when the tiles do not load ----
 let tileLoads = 0, tileErrors = 0, offline = null;
-satelliteTiles.on("tileload", () => { tileLoads += 1; });
-satelliteTiles.on("tileerror", () => { tileErrors += 1; if (tileErrors >= 4 && tileLoads === 0) useOfflineBasemap(); });
+[satelliteTiles, lightTiles, darkTiles].forEach((layer) => {
+  layer.on("tileload", () => { tileLoads += 1; });
+  layer.on("tileerror", () => { tileErrors += 1; if (tileErrors >= 4 && tileLoads === 0) useOfflineBasemap(); });
+});
 setTimeout(() => { if (tileLoads === 0) useOfflineBasemap(); }, 6000);
 
 function useOfflineBasemap() {
   if (offline || !window.BLR_BASEMAP) return;
   const b = window.BLR_BASEMAP;
-  map.removeLayer(tiles);
+  [satelliteTiles, lightTiles, darkTiles].forEach((layer) => map.removeLayer(layer));
   map.createPane("base").style.zIndex = 250;
   offline = L.layerGroup().addTo(map);
   const opt = { pane: "base", interactive: false };
@@ -110,9 +113,10 @@ function planeIcon(a, faded) {
 
 function render(d) {
   last = d;
+  const dirs = d.runways.map((r) => r.active_direction).join("|");
+  if (!built || lastDirs !== dirs) { buildFixed(d); lastDirs = dirs; }
   if (!built) {
-    buildFixed(d);
-    map.fitBounds(L.latLng(d.airport.lat, d.airport.lon).toBounds(2 * 46000), { padding: [8, 8] });
+    map.fitBounds(L.latLng(d.airport.lat, d.airport.lon).toBounds(2 * (d.radius_km || 60) * 1000), { padding: [8, 8] });
     built = true;
   }
   live.clearLayers();
@@ -124,24 +128,28 @@ function render(d) {
   }
   // Labels: try a few positions beside each aircraft so they do not cover each other.
   const placed = [], W = 74, H = 30;
+  const baseTries = [[16, -4, "right"], [16, 22, "right"], [16, -30, "right"], [-16, -4, "left"], [-16, 22, "left"], [16, 48, "right"], [16, -56, "right"]];
   const order = [...d.aircraft].sort((p, q) => (visible(q) - visible(p)) || p.dist_km - q.dist_km);
   for (const a of order) {
     const faded = !visible(a);
     const m = L.marker([a.lat, a.lon], { icon: planeIcon(a, faded), keyboard: false, zIndexOffset: faded ? 0 : 500, title: a.callsign || a.hex });
     const p = map.latLngToContainerPoint([a.lat, a.lon]);
-    const tries = [[16, -4, "right"], [16, 22, "right"], [16, -30, "right"], [-16, -4, "left"], [-16, 22, "left"], [16, 48, "right"], [16, -56, "right"]];
+    const tries = offsets[a.hex] ? [offsets[a.hex], ...baseTries] : baseTries;
     let pick = tries[0];
     for (const t of tries) {
       const x0 = t[2] === "right" ? p.x + t[0] : p.x + t[0] - W, y0 = p.y + t[1] - H / 2;
       if (!placed.some(([x, y]) => Math.abs(x - x0) < W && Math.abs(y - y0) < H)) { pick = t; break; }
     }
+    offsets[a.hex] = pick;
     placed.push([pick[2] === "right" ? p.x + pick[0] : p.x + pick[0] - W, p.y + pick[1] - H / 2]);
     m.bindTooltip(`${esc(a.flight_iata || a.callsign || a.hex)}<small>${fmt(a.alt_ft)} ft</small>`,
       { permanent: true, direction: pick[2], offset: [pick[0], pick[1]], className: "ac-label", opacity: faded ? 0.35 : 1 });
     m.addTo(live);
   }
 
-  const s = d.summary, w = d.weather || {};
+  const s = d.summary, w = d.weather || {}, radius = d.radius_km || 60;
+  if ($("radius-label")) $("radius-label").textContent = radius;
+  if ($("radius-note")) $("radius-note").textContent = "within " + radius + " km";
   $("m-air").textContent = fmt(s.airborne);
   $("m-arr").textContent = fmt(s.arriving);
   $("m-dep").textContent = fmt(s.departing);
@@ -150,21 +158,32 @@ function render(d) {
 
   const arr = d.aircraft.filter((a) => a.phase === "Arriving");
   const dep = d.aircraft.filter((a) => a.phase === "Departing");
+  const over = d.aircraft.filter((a) => a.phase === "Overflying");
   $("t-arr").innerHTML = arr.map((a) => `<tr><td class="flight">${esc(a.flight_iata || a.callsign)}</td><td>${esc(a.city || "–")}</td>
     <td class="num">${fmt(a.dist_km)} km</td><td class="num">${fmt(a.alt_ft)} ft</td><td class="num">${a.minutes_to_land == null ? "–" : a.minutes_to_land < 1 ? "under 1 min" : fmt(a.minutes_to_land) + " min"}</td></tr>`).join("")
-    || `<tr><td colspan="5" class="empty">No arrivals within 60 km.</td></tr>`;
+    || emptyRow(5, "No arrivals within " + radius + " km.");
   $("t-dep").innerHTML = dep.map((a) => `<tr><td class="flight">${esc(a.flight_iata || a.callsign)}</td><td>${esc(a.city || "–")}</td>
     <td class="num">${fmt(a.dist_km)} km</td><td class="num">${fmt(a.alt_ft)} ft</td><td class="num">+${fmt(a.vrate_fpm)}</td></tr>`).join("")
-    || `<tr><td colspan="5" class="empty">No departures within 60 km.</td></tr>`;
-  $("sec-arr").classList.toggle("dim", show === "Departing");
-  $("sec-dep").classList.toggle("dim", show === "Arriving");
+    || emptyRow(5, "No departures within " + radius + " km.");
+  $("t-over").innerHTML = over.map((a) => `<tr><td class="flight">${esc(a.flight_iata || a.callsign || a.hex)}</td>
+    <td class="num">${fmt(a.dist_km)} km</td><td class="num">${fmt(a.alt_ft)} ft</td><td class="num">${fmt(a.track)}°</td></tr>`).join("")
+    || emptyRow(4, "No overflying aircraft within " + radius + " km.");
+  $("sec-arr").classList.toggle("dim", show !== "all" && show !== "Arriving");
+  $("sec-dep").classList.toggle("dim", show !== "all" && show !== "Departing");
+  $("sec-over").classList.toggle("dim", show !== "all" && show !== "Overflying");
 }
 
-document.querySelectorAll(".filters button").forEach((b) => b.addEventListener("click", () => {
-  show = b.dataset.show;
-  document.querySelectorAll(".filters button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-  if (last) render(last);
-}));
+const requested = (location.hash.match(/phase=([A-Za-z]+)/) || [])[1];
+if (["Arriving", "Departing", "Overflying"].includes(requested)) show = requested;
+document.querySelectorAll(".filters button").forEach((b) => {
+  b.setAttribute("aria-pressed", String(b.dataset.show === show));
+  b.addEventListener("click", () => {
+    show = b.dataset.show;
+    document.querySelectorAll(".filters button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    history.replaceState(null, "", show === "all" ? location.pathname : "#phase=" + show);
+    if (last) render(last);
+  });
+});
 // Runway end labels only when zoomed in far enough to read them; the airport name otherwise.
 function runwayLabels() { $("map").classList.toggle("zoomed-in", map.getZoom() >= 11.5); }   // CSS hides .rwy-end below that
 map.on("zoomend", () => { runwayLabels(); if (last) render(last); });
