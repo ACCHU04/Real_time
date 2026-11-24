@@ -16,7 +16,7 @@
 <div class="grid cols-2" id="runways"></div>
 
 <section class="panel" style="margin-bottom:20px" aria-labelledby="wx-h">
-  <div class="panel-head"><h2 id="wx-h">Aviation weather</h2><span class="hint" id="w-time"></span></div>
+  <div class="panel-head"><h2 id="wx-h">Aviation weather & runway wind vectors</h2><span class="hint" id="w-time"></span></div>
   <dl class="facts">
     <div><dt>Flight category</dt><dd id="w-cat">–</dd></div>
     <div><dt>Visibility</dt><dd id="w-vis">–</dd></div>
@@ -29,48 +29,70 @@
   <div class="metar" id="w-metar"></div>
 </section>
 
-<section class="panel" style="margin-bottom:20px">
-  <div class="panel-head"><h2>Runway movements per hour against capacity</h2><span class="hint">Last 24 hours and next 6 hours</span></div>
-  <div class="chartbox tall"><canvas id="c-hourly" role="img" aria-label="Scheduled and actual runway movements per hour against capacity"></canvas></div></section>
-
-<div class="grid cols-2">
-  <section class="panel"><div class="panel-head"><h2>Runway sequence, next 2 hours</h2></div><div class="scroll capped"><table>
-    <thead><tr><th>Expected</th><th>Flight</th><th>Type</th><th>From / to</th><th>Aircraft</th><th>Runway</th><th>Status</th><th class="num">Delay</th></tr></thead>
-    <tbody id="upcoming"></tbody></table></div></section>
-  <section class="panel"><div class="panel-head"><h2>Arrivals and departures per hour</h2></div><div class="chartbox"><canvas id="c-arrdep" role="img" aria-label="Actual arrivals and departures per hour"></canvas></div></section>
+<!-- Organized Tabs Navigator -->
+<div class="ops-tabs">
+  <button type="button" class="tab-btn active" data-tab="tab-runways">✈️ Runway Demand & Sequence</button>
+  <button type="button" class="tab-btn" data-tab="tab-delays">⏱️ Delays & Airline Rankings</button>
+  <button type="button" class="tab-btn" data-tab="tab-flink">⚡ Flink Stream Analytics</button>
+  <button type="button" class="tab-btn" data-tab="tab-pipeline">🛡️ Pipeline & Kafka Health</button>
 </div>
 
-<div class="grid cols-2">
-  <section class="panel"><div class="panel-head"><h2>Average delay by scheduled hour</h2><span class="hint">Minutes</span></div><div class="chartbox"><canvas id="c-delay" role="img" aria-label="Average delay by hour"></canvas></div></section>
-  <section class="panel"><div class="panel-head"><h2>Delay bands, last 24 hours</h2></div><div class="chartbox"><canvas id="c-bands" role="img" aria-label="Flights in each delay band"></canvas></div></section>
+<!-- Tab 1: Runway Demand & Sequence -->
+<div id="tab-runways" class="tab-content active">
+  <section class="panel" style="margin-bottom:20px">
+    <div class="panel-head"><h2>Runway movements per hour against capacity</h2><span class="hint">Last 24 hours and next 6 hours</span></div>
+    <div class="chartbox tall"><canvas id="c-hourly" role="img" aria-label="Scheduled and actual runway movements per hour against capacity"></canvas></div>
+  </section>
+
+  <div class="grid cols-2">
+    <section class="panel"><div class="panel-head"><h2>Runway sequence, next 2 hours</h2></div><div class="scroll capped"><table>
+      <thead><tr><th>Expected</th><th>Flight</th><th>Type</th><th>From / to</th><th>Aircraft</th><th>Runway</th><th>Status</th><th class="num">Delay</th></tr></thead>
+      <tbody id="upcoming"></tbody></table></div></section>
+    <section class="panel"><div class="panel-head"><h2>Arrivals and departures per hour</h2></div><div class="chartbox"><canvas id="c-arrdep" role="img" aria-label="Actual arrivals and departures per hour"></canvas></div></section>
+  </div>
 </div>
 
-<div class="grid cols-2">
-  <section class="panel"><div class="panel-head"><h2>Airline performance, last 24 hours</h2></div><div class="scroll capped"><table>
-    <thead><tr><th>Airline</th><th class="num">Flights</th><th class="num">On time</th><th class="num">Average delay</th><th class="num">Cancelled</th></tr></thead>
-    <tbody id="airlines"></tbody></table></div></section>
-  <section class="panel"><div class="panel-head"><h2>Visibility and wind, last 24 hours</h2></div><div class="chartbox"><canvas id="c-wx" role="img" aria-label="Visibility, wind and crosswind over 24 hours"></canvas></div></section>
+<!-- Tab 2: Delays & Airline Rankings -->
+<div id="tab-delays" class="tab-content">
+  <div class="grid cols-2">
+    <section class="panel"><div class="panel-head"><h2>Average delay by scheduled hour</h2><span class="hint">Minutes</span></div><div class="chartbox"><canvas id="c-delay" role="img" aria-label="Average delay by hour"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Delay bands, last 24 hours</h2></div><div class="chartbox"><canvas id="c-bands" role="img" aria-label="Flights in each delay band"></canvas></div></section>
+  </div>
+
+  <div class="grid cols-2">
+    <section class="panel"><div class="panel-head"><h2>Airline performance, last 24 hours</h2></div><div class="scroll capped"><table>
+      <thead><tr><th>Airline</th><th class="num">Flights</th><th class="num">On time</th><th class="num">Average delay</th><th class="num">Cancelled</th></tr></thead>
+      <tbody id="airlines"></tbody></table></div></section>
+    <section class="panel"><div class="panel-head"><h2>Visibility and wind, last 24 hours</h2></div><div class="chartbox"><canvas id="c-wx" role="img" aria-label="Visibility, wind and crosswind over 24 hours"></canvas></div></section>
+  </div>
 </div>
 
-<div class="section-title"><h2>Computed in the stream by Apache Flink</h2><p>Flink keeps one row per flight, so a movement is counted once even when its status arrives twice.</p></div>
-<div class="grid cols-main">
-  <section class="panel flink-mark"><div class="panel-head"><h2>Rolling 60-minute movements per runway</h2><span class="hint">Every 5 minutes, against the capacity of one runway</span></div>
-    <div class="chartbox"><canvas id="c-roll" role="img" aria-label="Rolling 60-minute movements on each runway"></canvas></div></section>
-  <section class="panel flink-mark"><h2>Latest Flink result</h2>
-    <dl class="facts" style="grid-template-columns:1fr 1fr">
-      <div><dt id="f-asof">Movements, last 60 min</dt><dd id="f-mov" style="font-size:34px">–</dd></div>
-      <div><dt>Of runway capacity</dt><dd id="f-util" style="font-size:34px">–</dd></div>
-    </dl>
-    <h2 style="font:600 16px var(--cond);margin:18px 0 8px">Check against SQL, per hour</h2>
-    <div class="scroll" style="max-height:160px;overflow-y:auto"><table>
-      <thead><tr><th>Hour</th><th class="num">Flink</th><th class="num">SQL</th><th class="num">Difference</th></tr></thead>
-      <tbody id="f-check"></tbody></table></div></section>
+<!-- Tab 3: Apache Flink Stream Analytics -->
+<div id="tab-flink" class="tab-content">
+  <div class="section-title" style="margin-bottom:14px"><h2 style="font:600 18px var(--cond);color:#fff;margin:0 0 4px">Computed in the stream by Apache Flink</h2><p style="color:var(--muted);margin:0;font-size:13.5px">Flink keeps one state row per flight, counting movements exactly once regardless of duplicates.</p></div>
+  <div class="grid cols-main">
+    <section class="panel flink-mark"><div class="panel-head"><h2>Rolling 60-minute movements per runway</h2><span class="hint">Every 5 minutes, against the capacity of one runway</span></div>
+      <div class="chartbox"><canvas id="c-roll" role="img" aria-label="Rolling 60-minute movements on each runway"></canvas></div></section>
+    <section class="panel flink-mark"><h2>Latest Flink result</h2>
+      <dl class="facts" style="grid-template-columns:1fr 1fr">
+        <div><dt id="f-asof">Movements, last 60 min</dt><dd id="f-mov" style="font-size:32px;color:#14b8a6">–</dd></div>
+        <div><dt>Of runway capacity</dt><dd id="f-util" style="font-size:32px;color:#14b8a6">–</dd></div>
+      </dl>
+      <h2 style="font:600 15px var(--cond);margin:18px 0 8px;color:#fff">Check against SQL, per hour</h2>
+      <div class="scroll" style="max-height:160px;overflow-y:auto"><table>
+        <thead><tr><th>Hour</th><th class="num">Flink</th><th class="num">SQL</th><th class="num">Difference</th></tr></thead>
+        <tbody id="f-check"></tbody></table></div></section>
+  </div>
+  <section class="panel flink-mark" style="margin-bottom:20px"><div class="panel-head"><h2>Late movements per hour</h2><span class="hint">15 minutes or more late</span></div>
+    <div class="chartbox short"><canvas id="c-late" role="img" aria-label="Late arrivals and departures per hour"></canvas></div></section>
 </div>
-<section class="panel flink-mark" style="margin-bottom:20px"><div class="panel-head"><h2>Late movements per hour</h2><span class="hint">15 minutes or more late</span></div>
-  <div class="chartbox short"><canvas id="c-late" role="img" aria-label="Late arrivals and departures per hour"></canvas></div></section>
 
-<section class="panel"><div class="panel-head"><h2>Pipeline health</h2><span class="hint">Lag is the time from the producer sending a message to the consumer storing it</span></div><div class="scroll"><table>
-  <thead><tr><th>Consumer</th><th>Topic</th><th>Source</th><th class="num">Events</th><th class="num">Average lag (s)</th><th class="num">Processing (ms)</th><th class="num">Dead letters</th><th>Last event</th></tr></thead>
-  <tbody id="pipeline"></tbody></table></div></section>
+<!-- Tab 4: Pipeline Health -->
+<div id="tab-pipeline" class="tab-content">
+  <section class="panel"><div class="panel-head"><h2>Pipeline health & Kafka message telemetry</h2><span class="hint">Lag is the duration from producer publishing to consumer commit</span></div><div class="scroll"><table>
+    <thead><tr><th>Consumer</th><th>Topic</th><th>Source</th><th class="num">Events</th><th class="num">Average lag (s)</th><th class="num">Processing (ms)</th><th class="num">Dead letters</th><th>Last event</th></tr></thead>
+    <tbody id="pipeline"></tbody></table></div></section>
+</div>
+
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='ops.js') }}"></script>{% endblock %}

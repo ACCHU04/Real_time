@@ -1,14 +1,26 @@
 // Shared helpers for the three pages.
-const COLORS = { arr: "#1D5FA8", dep: "#B9650C", good: "#1B7F4C", bad: "#C23B32", warn: "#E39A1C", flink: "#0F7C78",
-                 muted: "#5E6B78", grid: "#E4E8ED", ink: "#17202B", neutral: "#8A96A3", sched: "#9AA6B2" };
+const COLORS = {
+  arr: "#38bdf8",     // Vibrant Sky Blue for Arrivals
+  dep: "#fb923c",     // Crisp Amber/Orange for Departures
+  good: "#10b981",    // Emerald Green for On-Time
+  bad: "#f43f5e",     // Rose Red for Late/Cancelled
+  warn: "#f59e0b",    // Amber for Caution/Moderate
+  flink: "#14b8a6",   // Teal for Flink
+  muted: "#94a3b8",   // Slate Muted
+  grid: "rgba(255, 255, 255, 0.08)", // Subtle dark grid lines
+  ink: "#f8fafc",     // Crisp bright text
+  neutral: "#64748b",
+  sched: "#64748b"
+};
 
 if (window.Chart) {
   Chart.defaults.color = COLORS.muted;
   Chart.defaults.borderColor = COLORS.grid;
   Chart.defaults.font.family = '"Barlow", "Segoe UI", system-ui, sans-serif';
-  Chart.defaults.font.size = 13;
+  Chart.defaults.font.size = 12.5;
   Chart.defaults.plugins.legend.labels.boxWidth = 12;
   Chart.defaults.plugins.legend.labels.boxHeight = 12;
+  Chart.defaults.plugins.legend.labels.color = "#cbd5e1";
   Chart.defaults.animation = false;
 }
 

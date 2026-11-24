@@ -103,3 +103,19 @@ poll("/api/ops", 30, (d) => {
     <td class="num">${fmt(r.events)}</td><td class="num">${fmt(r.avg_lag_s, 2)}</td><td class="num">${fmt(r.avg_processing_ms, 2)}</td>
     <td class="num">${fmt(r.dead_letters)}</td><td>${esc(r.last_event)}</td></tr>`).join("");
 });
+
+// Interactive tab switching on operations board
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      const target = document.getElementById(btn.dataset.tab);
+      if (target) {
+        target.classList.add("active");
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
+      }
+    });
+  });
+});

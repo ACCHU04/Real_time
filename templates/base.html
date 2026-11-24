@@ -14,14 +14,17 @@
       <span class="code">BLR</span>
       <span class="name"><strong>Kempegowda International Airport</strong>Bengaluru, live flights and weather</span>
     </a>
-    <nav aria-label="Pages">
-      <a href="/" {% if page == 'public' %}aria-current="page"{% endif %}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 4h18v3H3zm0 5h18v2H3zm0 4h18v2H3zm0 4h12v2H3z"/></svg>Flights</a>
-      <a href="/ops" {% if page == 'ops' %}aria-current="page"{% endif %}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2h8l1.5 5h-11zM10 8h4v11h-4zM5 20h14v2H5z"/></svg>Operations</a>
-      <a href="/map" {% if page == 'map' %}aria-current="page"{% endif %}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Live map</a>
-    </nav>
+    <div style="display:flex;align-items:center;gap:18px;margin-left:auto">
+      <span class="live-badge">Kafka Stream Live</span>
+      <nav aria-label="Pages">
+        <a href="/" {% if page == 'public' %}aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 4h18v3H3zm0 5h18v2H3zm0 4h18v2H3zm0 4h12v2H3z"/></svg>Flights</a>
+        <a href="/ops" {% if page == 'ops' %}aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2h8l1.5 5h-11zM10 8h4v11h-4zM5 20h14v2H5z"/></svg>Operations</a>
+        <a href="/map" {% if page == 'map' %}aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Live map</a>
+      </nav>
+    </div>
   </div>
 </header>
 <main class="wrap">
